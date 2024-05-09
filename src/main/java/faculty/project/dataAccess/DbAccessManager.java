@@ -284,8 +284,34 @@ public class DbAccessManager {
      * @return DB successfully updated
      */
     public boolean gradeStudent(Student student, Subject subject, float grade, Teacher teacher) {
-        // TBD
-        return false;
+
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+            String sql = "UPDATE academic_record SET grade = ?, teacher_id = ? WHERE student_id = ? AND subject_id = ? AND year = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setFloat(1, grade);
+                pstmt.setInt(2, teacher.getDni());
+                pstmt.setInt(3, student.getDni());
+                pstmt.setInt(4, subject.getId());
+                pstmt.setInt(5, currentYear);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (grade >= 5) {
+                sql = "UPDATE user SET earnedCredits = earnedCredits + ? WHERE dni = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setInt(1, subject.getCreditNumber());
+                    pstmt.setInt(2, student.getDni());
+                    pstmt.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            return true;
+
     }
 
     public void assign(Subject subject, Teacher teacher) {
